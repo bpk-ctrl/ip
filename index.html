@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP, WebRTC, and User Agent Info</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+        }
+        .info {
+            margin-bottom: 20px;
+        }
+        .info label {
+            font-weight: bold;
+        }
+        .info div {
+            margin-top: 5px;
+            padding: 8px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #ipAddress, #webrtcInfo, #userAgent {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>IP, WebRTC, and User Agent Information</h1>
+
+    <div class="info">
+        <label for="ipAddress">Your IP Address:</label>
+        <div id="ipAddress">Loading...</div>
+    </div>
+
+    <div class="info">
+        <label for="webrtcInfo">WebRTC Information:</label>
+        <div id="webrtcInfo">Loading...</div>
+    </div>
+
+    <div class="info">
+        <label for="userAgent">User Agent:</label>
+        <div id="userAgent"></div>
+    </div>
+
+    <script>
+        // Fetching the IP address from a public API
+        async function getIpAddress() {
+            const ipApi = 'https://api.ipify.org?format=json';
+            try {
+                const response = await fetch(ipApi);
+                const data = await response.json();
+                document.getElementById('ipAddress').textContent = data.ip;
+            } catch (error) {
+                document.getElementById('ipAddress').textContent = 'Unable to fetch IP address.';
+            }
+        }
+
+        // Get WebRTC info (local IPs, STUN server candidates, etc.)
+        function getWebRTCInfo() {
+            const pc = new RTCPeerConnection({ iceServers: [] });
+            pc.createDataChannel('');
+            pc.createOffer()
+                .then(offer => pc.setLocalDescription(offer))
+                .catch(err => console.error(err));
+
+            pc.onicecandidate = function(event) {
+                if (event.candidate) {
+                    const candidate = event.candidate.candidate;
+                    if (candidate) {
+                        const ipMatch = candidate.match(/\d+\.\d+\.\d+\.\d+/);
+                        if (ipMatch) {
+                            document.getElementById('webrtcInfo').textContent = 'WebRTC IP: ' + ipMatch[0];
+                        }
+                    }
+                }
+            };
+        }
+
+        // Get the user agent string
+        function getUserAgent() {
+            const userAgent = navigator.userAgent;
+            document.getElementById('userAgent').textContent = userAgent;
+        }
+
+        // Initialize all functions
+        function init() {
+            getIpAddress();
+            getWebRTCInfo();
+            getUserAgent();
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
